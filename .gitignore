@@ -3,5 +3,6 @@
 
 dist/
 node_modules/
+doc/
 
 tmp.html
