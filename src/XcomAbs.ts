@@ -1,6 +1,6 @@
 
 import { Address, ObjectType, PropertyID, ServiceID } from "./constants";
-import { Datapoint, Package } from "./protocol";
+import { Datapoint, MultiInfoRequest, MultiInfoResponse, Package } from "./protocol";
 
 
 export abstract class XcomAbs {
@@ -23,9 +23,8 @@ export abstract class XcomAbs {
             dstAddr
         );
 
-        return this.sendPackage(request)
-            .then(p => 
-                parameter.unpackValue(p.frame.service_data.property_data));
+        return this.sendPackage(request).then(p => 
+            parameter.unpackValue(p.frame.service_data.property_data));
     }
 
     private getObjectType(id: number): ObjectType {
@@ -48,6 +47,33 @@ export abstract class XcomAbs {
         
         return isInfo ? ObjectType.Info : ObjectType.Parameter;
     }
+
+    async getMultiValue(parameters: MultiInfoRequest[]): Promise<MultiInfoResponse> {
+        // only ObjectType.Info allowed
+        for (const mir of parameters) {
+            if (this.getObjectType(mir.user_info_reference) != ObjectType.Info) {
+                return Promise.reject(
+                    new Error("Requested ObjectType is not INFO"));
+            }
+        }
+
+        const data = MultiInfoRequest.bytesFromArray(parameters);
+        const request = Package.genPackage(
+            ServiceID.PropertyRead,
+            0x1,
+            ObjectType.MultiInfo,
+            PropertyID.None,
+            data,
+            Address.Source,
+            Address.Xcom232i
+        );
+
+        return this.sendPackage(request).then(p => {
+            return MultiInfoResponse.fromBuffer(
+                p.frame.service_data.property_data, parameters.length);
+        });
+    }
+
 
     async setValue(parameter: Datapoint, value: any, dstAddr: Address, propertyID = PropertyID.UnsavedValue) {
         if (!(propertyID in PropertyID)) {

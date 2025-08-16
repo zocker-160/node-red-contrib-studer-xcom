@@ -1,55 +1,6 @@
 <script type="text/javascript">
     const label_reader = "232i read";
 
-    function getMappingRow(mappings) {
-        const row = $(`
-        <tr>
-            <td><input class="node-input-param" type="number" placeholder="ID" min="1"></td>
-            <td>
-                <select class="node-input-type">
-                    <option value="3">Float</option>
-                    <option value="4">Enum Short</option>
-                    <option value="5">Enum Long</option>
-                    <option value="1">Boolean</option>
-                    <option value="2">SInteger</option>
-                    <option value="6">String</option>
-                    <option value="7">Bytes</option>
-                </select>
-            </td>
-            <td><input class="node-input-dstaddr" type="number" value="100"></td>
-            <td><input class="node-input-name" type="text" placeholder="Name"></td>
-            <td>
-                <select class="node-input-pid">
-                    <option value="13">UnsavedValue</option>
-                    <option value="5">Value</option>
-                    <option value="6">Min</option>
-                    <option value="7">Max</option>
-                    <option value="8">Level</option>
-                </select>
-            </td>
-
-            <td>
-                <button id="node-input-del-mapping" type="button" class="red-ui-button red-ui-button-small">
-                    <i class="fa fa-remove"></i>
-                </button>
-            </td>
-        </tr>
-        `);
-
-        if (mappings) {
-            row.find(".node-input-param").val(mappings.id);
-            row.find(".node-input-type").val(mappings.type);
-            row.find(".node-input-dstaddr").val(mappings.dstAddr);
-            row.find(".node-input-name").val(mappings.name);
-        }
-        row.find(".node-input-pid").val(mappings.pid || 13);
-        row.find("#node-input-del-mapping").click(function (e) {
-            e.preventDefault();
-            row.remove();
-        });
-        return row;
-    }
-
     RED.nodes.registerType('studer-xcomrs232', {
         paletteLabel: label_reader,
         category: "Studer Innotec",
@@ -57,6 +8,7 @@
         defaults: {
             name: {value:""},
             serial: {type: "serial-port", required: true},
+            multiinfo: {value: false, required: false},
             entries: {value: [], required: false}
         },
         inputs: 1,
@@ -105,6 +57,55 @@
             this.entries = mappings;
         }
     });
+
+    function getMappingRow(mappings) {
+        const row = $(`
+        <tr>
+            <td><input class="node-input-param" type="number" placeholder="ID" min="1"></td>
+            <td>
+                <select class="node-input-type">
+                    <option value="3">Float</option>
+                    <option value="4">Enum Short</option>
+                    <option value="5">Enum Long</option>
+                    <option value="1">Boolean</option>
+                    <option value="2">SInteger</option>
+                    <option value="6">String</option>
+                    <option value="7">Bytes</option>
+                </select>
+            </td>
+            <td><input class="node-input-dstaddr" type="number" value="100"></td>
+            <td><input class="node-input-name" type="text" placeholder="Name"></td>
+            <td>
+                <select class="node-input-pid">
+                    <option value="13">UnsavedValue</option>
+                    <option value="5">Value</option>
+                    <option value="6">Min</option>
+                    <option value="7">Max</option>
+                    <option value="8">Level</option>
+                </select>
+            </td>
+
+            <td>
+                <button id="node-input-del-mapping" type="button" class="red-ui-button red-ui-button-small">
+                    <i class="fa fa-remove"></i>
+                </button>
+            </td>
+        </tr>
+        `);
+
+        if (mappings) {
+            row.find(".node-input-param").val(mappings.id);
+            row.find(".node-input-type").val(mappings.type);
+            row.find(".node-input-dstaddr").val(mappings.dstAddr);
+            row.find(".node-input-name").val(mappings.name);
+        }
+        row.find(".node-input-pid").val(mappings.pid || 13);
+        row.find("#node-input-del-mapping").click(function (e) {
+            e.preventDefault();
+            row.remove();
+        });
+        return row;
+    }
 </script>
 
 
@@ -129,6 +130,14 @@
     <div class="form-row">
         <label for="node-input-serial"><i class="fa fa-random"></i> Serial Port</label>
         <input id="node-input-serial">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-multiinfo"></label>
+        <label for="node-input-multiinfo" style="width: 70%; user-select: none;">
+            <input type="checkbox" id="node-input-multiinfo" style="width: 22px; vertical-align: top;">
+            <span>Use MultiInfo Request</span>
+        </label>
     </div>
 
     <div class="red-ui-editableList red-ui-editableList-border red-ui-editableList-container">

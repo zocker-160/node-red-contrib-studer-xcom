@@ -70,6 +70,7 @@ export enum ObjectID_Screen {
 }
 
 export enum PropertyID {
+    None = 0x01,
     Value = 0x05,
     Min = 0x06,
     Max = 0x07,

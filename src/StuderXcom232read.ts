@@ -1,11 +1,12 @@
 import { Node, NodeAPI, NodeDef } from "node-red";
-import { Datapoint } from "./protocol";
-import { Address, DataType, PropertyID } from "./constants";
+import { Datapoint, MultiInfoRequest } from "./protocol";
+import { Address, AggregationType, DataType, PropertyID } from "./constants";
 import { XcomRS232 } from "./XcomRS232";
 
 
 interface StuderConfig extends NodeDef {
     serial: string
+    multiinfo?: boolean
     entries: Entry[]
 }
 
@@ -38,27 +39,25 @@ export = function (RED: NodeAPI) {
 
             const payload: any = {};
 
-            try {
-                const xcom = new XcomRS232(serial.serialport, serial.serialbaud);
+            const paramRequest = (xcom: XcomRS232) => {
+                config.entries.reduce(async (prev, curr) => {
+                    await prev;
 
-                config.entries.reduce((prev, curr) => {
-                    return prev.then(() => {
-                        const dp = new Datapoint(
-                            curr.id, 
-                            curr.type as DataType,
-                            curr.name
-                        );
+                    const dp = new Datapoint(
+                        curr.id,
+                        curr.type as DataType,
+                        curr.name
+                    );
 
-                        this.status({
-                            fill: "blue",
-                            shape: "dot",
-                            text: dp.name
-                        });
+                    this.status({
+                        fill: "blue",
+                        shape: "dot",
+                        text: curr.name
+                    });
 
-                        return xcom.getValue(
-                            dp, curr.dstAddr as Address, curr.pid as PropertyID)
-                            .then(value => payload[curr.name] = value);
-                    })
+                    const value = await xcom.getValue(dp, curr.dstAddr as Address);
+                    payload[curr.name] = value;
+
                 }, Promise.resolve())
                 .catch(err => done(err))
                 .finally(() => {
@@ -69,6 +68,49 @@ export = function (RED: NodeAPI) {
                     send(msg);
                     done();
                 });
+            };
+
+            const multiRequest = (xcom: XcomRS232) => {
+                const multiinfo = config.entries.map(e => 
+                    // TODO Aggregation type should be changable from UI
+                    new MultiInfoRequest(e.id, AggregationType.Master));
+
+                const payload: any = {};
+
+                this.status({
+                    fill: "blue",
+                    shape: "dot",
+                    text: "MultiInfo Request"
+                });
+
+                xcom.getMultiValue(multiinfo)
+                    .then(mir => {
+                        mir.entries.forEach((e, i) => {
+                            const name = config.entries[i].name;
+                            payload[name] = e.value;
+                        });
+                    })
+                    .catch(err => done(err))
+                    .finally(() => {
+                        this.status({});
+                        xcom.close();
+
+                        msg.payload = payload;
+                        send(msg);
+                        done();
+                    });
+            };
+
+            try {
+                const xcom = new XcomRS232(serial.serialport, serial.serialbaud);
+
+                if (config.multiinfo) {
+                    multiRequest(xcom);
+                }
+                else {
+                    paramRequest(xcom);
+                }
+
             }
             catch (error) {
                 if (error instanceof Error) {
