@@ -12,6 +12,7 @@
   "author": "zocker_160",
   "license": "AGPL-3.0-or-later",
   "readme": "Readme.md",
+  "repository": {"url": "https://github.com/zocker-160/node-red-contrib-studer-xcom"},
   "keywords": ["iot", "smarthome"],
   "node-red": {
     "nodes": {
