@@ -1,0 +1,33 @@
+{
+  "name": "@zocker-160/node-red-contrib-studer-xcom",
+  "version": "1.0.0",
+  "description": "Unofficial NodeRed node to connect with Studer Innotec Xcom devices",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "tsc && node .",
+    "test1": "tsc && node dist/test1.js",
+    "test2": "tsc && node dist/test2.js",
+    "build": "tsc && cp src/*.html dist"
+  },
+  "author": "zocker_160",
+  "license": "AGPL-3.0-or-later",
+  "readme": "Readme.md",
+  "keywords": ["iot", "smarthome"],
+  "node-red": {
+    "nodes": {
+      "Xcom232i read": "dist/StuderXcom232read.js",
+      "Xcom232i write": "dist/StuderXcom232write.js"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.15",
+    "@types/node-red": "^1.3.5",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@serialport/parser-readline": "^13.0.0",
+    "iconv-lite": "^0.6.3",
+    "serialport": "^13.0.0",
+    "smart-buffer": "^4.2.0"
+  }
+}
