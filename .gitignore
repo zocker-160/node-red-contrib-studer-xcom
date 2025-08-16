@@ -1,0 +1,7 @@
+.directory
+.vscode
+
+dist/
+node_modules/
+
+tmp.html
