@@ -1,0 +1,164 @@
+<script type="text/javascript">
+    const label_reader = "232i read";
+
+    function getMappingRow(mappings) {
+        const row = $(`
+        <tr>
+            <td><input class="node-input-param" type="number" placeholder="ID" min="1"></td>
+            <td>
+                <select class="node-input-type">
+                    <option value="3">Float</option>
+                    <option value="4">Enum Short</option>
+                    <option value="5">Enum Long</option>
+                    <option value="1">Boolean</option>
+                    <option value="2">SInteger</option>
+                    <option value="6">String</option>
+                    <option value="7">Bytes</option>
+                </select>
+            </td>
+            <td><input class="node-input-dstaddr" type="number" value="100"></td>
+            <td><input class="node-input-name" type="text" placeholder="Name"></td>
+            <td>
+                <select class="node-input-pid">
+                    <option value="13">UnsavedValue</option>
+                    <option value="5">Value</option>
+                    <option value="6">Min</option>
+                    <option value="7">Max</option>
+                    <option value="8">Level</option>
+                </select>
+            </td>
+
+            <td>
+                <button id="node-input-del-mapping" type="button" class="red-ui-button red-ui-button-small">
+                    <i class="fa fa-remove"></i>
+                </button>
+            </td>
+        </tr>
+        `);
+
+        if (mappings) {
+            row.find(".node-input-param").val(mappings.id);
+            row.find(".node-input-type").val(mappings.type);
+            row.find(".node-input-dstaddr").val(mappings.dstAddr);
+            row.find(".node-input-name").val(mappings.name);
+        }
+        row.find(".node-input-pid").val(mappings.pid || 13);
+        row.find("#node-input-del-mapping").click(function (e) {
+            e.preventDefault();
+            row.remove();
+        });
+        return row;
+    }
+
+    RED.nodes.registerType('studer-xcomrs232', {
+        paletteLabel: label_reader,
+        category: "Studer Innotec",
+        color: '#deb887',
+        defaults: {
+            name: {value:""},
+            serial: {type: "serial-port", required: true},
+            entries: {value: [], required: false}
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "serial.svg",
+        label: function () {
+            return this.name || label_reader;
+        },
+        oneditprepare: function () {
+            const container = $("#node-input-mappings");
+            
+            const currentMappings = this.entries || [];
+            currentMappings.forEach(m => {
+                const row = getMappingRow(m);
+                container.append(row);
+            });
+            
+            
+            $("#node-input-add-mapping").click(function (e) {
+                e.preventDefault();
+                
+                const row = getMappingRow(false);
+                container.append(row);
+            });
+        },
+        oneditsave: function () {
+            const mappings = [];
+            const container = $("#node-input-mappings");
+
+            container.children("tr").each(function (i, e) {
+                const row = $(e);
+                const mapping = {
+                    id: parseInt(row.find(".node-input-param").val()),
+                    type: parseInt(row.find(".node-input-type").val()),
+                    dstAddr: parseInt(row.find(".node-input-dstaddr").val()),
+                    name: row.find(".node-input-name").val(),
+                    pid: parseInt(row.find(".node-input-pid").val())
+                };
+ 
+                // ignore if id is missing
+                if (mapping.id) {
+                    mappings.push(mapping);
+                }
+            });
+
+            this.entries = mappings;
+        }
+    });
+</script>
+
+
+<script type="text/html" data-template-name="studer-xcomrs232">
+    <style>
+        #node-input-mappings td>input,
+        #node-input-mappings td>select {
+            width: 100%;
+        }
+
+        tbody td {
+            text-align: center;
+            width: auto;
+        }
+    </style>
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-serial"><i class="fa fa-random"></i> Serial Port</label>
+        <input id="node-input-serial">
+    </div>
+
+    <div class="red-ui-editableList red-ui-editableList-border red-ui-editableList-container">
+        <div class="form-row">
+            <table class="red-ui-table">
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">ID</th>
+                        <th style="width: 15%;">Type</th>
+                        <th style="width: 10%;">Dst Addr</th>
+                        <th>Name</th>
+                        <th style="width: 15%;">PropertyID</th>
+                    </tr>
+                </thead>
+                
+                <tbody id="node-input-mappings">
+                </tbody>
+                
+            </table>
+        </div>
+    </div>
+    <div class="form-row">
+        <button id="node-input-add-mapping" type="button" class="red-ui-button red-ui-button-small">
+            <i class="fa fa-plus"></i>
+            <span>add parameter</span>
+        </button>
+    </div>
+    
+</script>
+
+<script type="text/html" data-help-name="studer-xcomrs232">
+    <p>Studer Innotec XcomRS232 Reader</p>
+</script>

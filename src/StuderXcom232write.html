@@ -1,0 +1,83 @@
+<script type="text/javascript">
+    const label_write = "232i write";
+
+    RED.nodes.registerType("studer-xcomrs232-write", {
+        paletteLabel: label_write,
+        category: "Studer Innotec",
+        color: '#deb887',
+        defaults: {
+            name: {value:""},
+            serial: {type: "serial-port", required: true},
+            parid: {required: true},
+            partype: {required: true},
+            paraddr: {required: true},
+            parpid: {required: true}
+        },
+        inputs: 1,
+        outputs: 0,
+        icon: "serial.svg",
+        align: "right",
+        label: function () {
+            return this.name || label_write;
+        }
+    });
+
+</script>
+
+
+<script type="text/html" data-template-name="studer-xcomrs232-write">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-serial"><i class="fa fa-random"></i> Serial Port</label>
+        <input id="node-input-serial">
+    </div>
+
+
+    <div class="form-row">
+        <label>Parameter</label>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-parid">ID</label>
+        <input type="number" id="node-input-parid" min="1">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-partype">Type</label>
+        <select id="node-input-partype">
+            <option value="3">Float</option>
+            <option value="4">Enum Short</option>
+            <option value="5">Enum Long</option>
+            <option value="1">Boolean</option>
+            <option value="2">SInteger</option>
+            <option value="6">String</option>
+            <option value="7">Bytes</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-paraddr">Dst Addr</label>
+        <input type="number" id="node-input-paraddr" placeholder="100">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-parpid">PropertyID</label>
+        <select id="node-input-parpid">
+            <option value="13">UnsavedValue</option>
+            <option value="5">Value</option>
+            <option value="6">Min</option>
+            <option value="7">Max</option>
+            <option value="8">Level</option>
+        </select>
+    </div>
+
+</script>
+
+
+<script type="text/html" data-help-name="studer-xcomrs232-write">
+    <p>Studer Innotec XcomRS232 Writer</p>
+</script>
