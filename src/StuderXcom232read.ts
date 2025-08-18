@@ -1,8 +1,10 @@
-import { Node, NodeAPI, NodeDef } from "node-red";
+import { NodeAPI, NodeDef } from "node-red";
+import EventEmitter from "events";
+
 import { Datapoint, MultiInfoRequest } from "./protocol";
 import { Address, AggregationType, DataType, PropertyID } from "./constants";
 import { XcomRS232 } from "./XcomRS232";
-
+import { SerialPortNode, SerialSingleton } from "./singleton";
 
 interface StuderConfig extends NodeDef {
     serial: string
@@ -19,25 +21,27 @@ interface Entry {
 }
 
 
-interface SerialPortNode extends Node {
-    serialport: string
-    serialbaud: number
-    enabled: boolean
-}
-
 
 export = function (RED: NodeAPI) {
     RED.nodes.registerType("studer-xcomrs232", function (config: StuderConfig) {
         RED.nodes.createNode(this, config);
 
+        const serial = RED.nodes.getNode(config.serial) as SerialPortNode;
+        if (!serial) {
+            return null;
+        }
+        if (!serial.singleton) {
+            serial.singleton = new SerialSingleton();
+        }
+
         this.on("input", (msg, send, done) => {
+            const payload: any = {};
+
             const serial = RED.nodes.getNode(config.serial) as SerialPortNode;
             if (!serial) {
                 done(new Error("serial port config node not available"));
                 return null;
             }
-
-            const payload: any = {};
 
             const paramRequest = (xcom: XcomRS232) => {
                 config.entries.reduce(async (prev, curr) => {
@@ -63,6 +67,9 @@ export = function (RED: NodeAPI) {
                 .finally(() => {
                     this.status({});
                     xcom.close();
+
+                    serial.singleton.inUse = false;
+                    serial.singleton.event.emit("done");
 
                     msg.payload = payload;
                     send(msg);
@@ -95,11 +102,28 @@ export = function (RED: NodeAPI) {
                         this.status({});
                         xcom.close();
 
+                        serial.singleton.inUse = false;
+                        serial.singleton.event.emit("done");
+
                         msg.payload = payload;
                         send(msg);
                         done();
                     });
             };
+
+            if (serial.singleton.inUse) {
+                this.status({
+                    fill: "yellow",
+                    shape: "ring",
+                    text: "waiting"
+                });
+
+                serial.singleton.event.once("done", () => this.receive(msg));
+                return;
+            }
+            else {
+                serial.singleton.inUse = true;
+            }
 
             try {
                 const xcom = new XcomRS232(serial.serialport, serial.serialbaud);

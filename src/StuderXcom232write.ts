@@ -2,6 +2,7 @@ import { Node, NodeAPI, NodeDef } from "node-red";
 import { Datapoint } from "./protocol";
 import { Address, DataType, PropertyID } from "./constants";
 import { XcomRS232 } from "./XcomRS232";
+import { SerialPortNode, SerialSingleton } from "./singleton";
 
 
 interface StuderConfig extends NodeDef {
@@ -12,16 +13,18 @@ interface StuderConfig extends NodeDef {
     parpid: string
 }
 
-interface SerialPortNode extends Node {
-    serialport: string
-    serialbaud: number
-    enabled: boolean
-}
-
 
 export = function (RED: NodeAPI) {
     RED.nodes.registerType("studer-xcomrs232-write", function (config: StuderConfig) {
         RED.nodes.createNode(this, config);
+
+        const serial = RED.nodes.getNode(config.serial) as SerialPortNode;
+        if (!serial) {
+            return null;
+        }
+        if (!serial.singleton) {
+            serial.singleton = new SerialSingleton();
+        }
 
         this.on("input", (msg, send, done) => {
             if (!msg || msg.payload == undefined || msg.payload == null) {
@@ -34,6 +37,21 @@ export = function (RED: NodeAPI) {
                 return null;
             }
 
+            if (serial.singleton.inUse) {
+                this.status({
+                    fill: "yellow",
+                    shape: "ring",
+                    text: "waiting"
+                });
+
+                serial.singleton.event.once("done", () => this.receive(msg));
+                return;
+            }
+            else {
+                serial.singleton.inUse = true;
+            }
+
+
             const id = parseInt(config.parid);
             const type = parseInt(config.partype) as DataType
             const addr = parseInt(config.paraddr) as Address
@@ -45,7 +63,7 @@ export = function (RED: NodeAPI) {
                 const xcom = new XcomRS232(serial.serialport, serial.serialbaud);
 
                 this.status({
-                    fill: "yellow",
+                    fill: "red",
                     shape: "dot",
                     text: "writing"
                 });
@@ -55,6 +73,10 @@ export = function (RED: NodeAPI) {
                     .finally(() => {
                         this.status({});
                         xcom.close();
+
+                        serial.singleton.inUse = false;
+                        serial.singleton.event.emit("done");
+
                         done();
                     });
 
