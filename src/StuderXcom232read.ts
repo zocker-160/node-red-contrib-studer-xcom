@@ -37,12 +37,6 @@ export = function (RED: NodeAPI) {
         this.on("input", (msg, send, done) => {
             const payload: any = {};
 
-            const serial = RED.nodes.getNode(config.serial) as SerialPortNode;
-            if (!serial) {
-                done(new Error("serial port config node not available"));
-                return null;
-            }
-
             const paramRequest = (xcom: XcomRS232) => {
                 config.entries.reduce(async (prev, curr) => {
                     await prev;

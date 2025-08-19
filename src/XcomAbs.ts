@@ -5,9 +5,6 @@ import { Datapoint, MultiInfoRequest, MultiInfoResponse, Package } from "./proto
 
 export abstract class XcomAbs {
 
-    // TODO getMultiValue / object_type multi info
-    // see: https://github.com/ankohanse/aioxcom/blob/17c64937f7f7cc6a4c86b91bcf71f1c47aca402a/src/aioxcom/xcom_api.py#L190
-
     async getValue(parameter: Datapoint, dstAddr: Address, propertyID = PropertyID.UnsavedValue): Promise<any> {
         if (!(propertyID in PropertyID)) {
             throw new Error("invalid propertyID");
@@ -28,8 +25,13 @@ export abstract class XcomAbs {
     }
 
     private getObjectType(id: number): ObjectType {
+        /*
         // TODO proper objectType handling
-        // see: https://github.com/ankohanse/aioxcom/blob/17c64937f7f7cc6a4c86b91bcf71f1c47aca402a/src/aioxcom/xcom_datapoints.py#L87
+
+        if QSPLevel exists => ObjectType.Parameter
+        else ObjectType.Info
+        */
+
         /*
         INFO ranges:
 

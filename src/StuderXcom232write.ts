@@ -31,12 +31,6 @@ export = function (RED: NodeAPI) {
                 return;
             }
 
-            const serial = RED.nodes.getNode(config.serial) as SerialPortNode;
-            if (!serial) {
-                done(new Error("serial port config node not available"));
-                return null;
-            }
-
             if (serial.singleton.inUse) {
                 this.status({
                     fill: "yellow",
