@@ -58,20 +58,28 @@ export = function (RED: NodeAPI) {
 
                 this.status({
                     fill: "red",
-                    shape: "dot",
+                    shape: "ring",
                     text: "writing"
                 });
 
                 xcom.setValue(dp, msg.payload, addr, propId)
-                    .catch(err => done(err))
-                    .finally(() => {
+                    .then(() => {
                         this.status({});
+                        done();
+                    })
+                    .catch(err => {
+                        this.status({
+                            fill: "red",
+                            shape: "dot",
+                            text: String(err)
+                        });
+                        done(err);
+                    })
+                    .finally(() => {
                         xcom.close();
 
                         serial.singleton.inUse = false;
                         serial.singleton.event.emit("done");
-
-                        done();
                     });
 
             }

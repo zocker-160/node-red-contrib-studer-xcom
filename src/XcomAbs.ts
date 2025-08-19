@@ -92,10 +92,7 @@ export abstract class XcomAbs {
             dstAddr
         );
 
-        const response = await this.sendPackage(request);
-        if (response.isError()) {
-            throw new Error(`write request failed: ${response.getError()}`);
-        }
+        await this.sendPackage(request);
     }
 
     abstract sendPackage(pack: Package): Promise<Package>;
