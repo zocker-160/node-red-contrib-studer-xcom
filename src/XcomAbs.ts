@@ -1,5 +1,6 @@
-
-import { Address, ObjectType, PropertyID, ServiceID } from "./constants";
+import { Jimp, JimpInstance } from "jimp"
+import { SmartBuffer } from "smart-buffer";
+import { Address, MAX_MULTI_INFO, ObjectID_Screen, ObjectType, PropertyID, PropertyID_Datalog, ServiceID } from "./constants";
 import { Datapoint, MultiInfoRequest, MultiInfoResponse, Package } from "./protocol";
 
 
@@ -51,11 +52,15 @@ export abstract class XcomAbs {
     }
 
     async getMultiValue(parameters: MultiInfoRequest[]): Promise<MultiInfoResponse> {
+        if (parameters.length > MAX_MULTI_INFO) {
+            return Promise.reject(
+                `MultiInfo max parameter count (${MAX_MULTI_INFO}) exceeded`);
+        }
+
         // only ObjectType.Info allowed
         for (const mir of parameters) {
             if (this.getObjectType(mir.user_info_reference) != ObjectType.Info) {
-                return Promise.reject(
-                    new Error("Requested ObjectType is not INFO"));
+                return Promise.reject("Requested ObjectType is not INFO");
             }
         }
 
@@ -93,6 +98,93 @@ export abstract class XcomAbs {
         );
 
         await this.sendPackage(request);
+    }
+
+
+    async getScreen(command: ObjectID_Screen): Promise<JimpInstance> {
+        const request: Package = Package.genPackage(
+            ServiceID.PropertyRead,
+            command,
+            ObjectType.Screen,
+            0x0 as PropertyID, // Full screen,
+            Buffer.alloc(0),
+            Address.Source,
+            Address.Xcom232i
+        );
+        return this.sendPackage(request).then(
+            p => this.decodeScreenData(p.frame.service_data.property_data));
+    }
+
+    private decodeScreenData(buf: Buffer): JimpInstance {
+        // looking at the raw data in hex editor, it seems like
+        // the data is not encoded the way it is explained in the documentation at all
+        // instead they are simply sending the image encoded with 1bpp
+
+        // resolution is usually 128x64
+        const xRes = 128;
+        const yRes = 64;
+
+        const output: number[] = [];
+
+        for (let i = 0; i < buf.length; i++) {
+            // convert from 1bpp to 32bpp for Jimp
+            const chunk = buf.readUint8(i);
+
+            for (let x = 7; x >= 0; x--) {
+                const bit = ((chunk >> x) & 1) ? 0xFFFFFFFF : 0x000000FF;
+                output.push(bit);
+            }
+        }
+
+        const image = Jimp.fromBitmap({
+            height: yRes,
+            width: xRes,
+            data: output
+        });
+
+        if (image instanceof Jimp) {
+            image.flip({vertical: true});
+            return image;
+        }
+        else {
+            throw new Error("Failed to convert data to image");
+        }
+    }
+
+    private decodeScreenData_official(buf: Buffer): Buffer {
+        // resolution is usually 128x64
+        const xRes = 128;
+        const yRes = 64;
+
+        const output = new SmartBuffer();
+
+        // data is packed into 16bit chunks
+        for (let i = 0; i < buf.length; i = i+2) {
+            const chunk = buf.readUint16BE(i);
+            
+            const test = buf.subarray(i, i+2);
+            console.log(i, test.toString("hex"));
+
+            if ((chunk >> 15) == 0) {
+                // 15 pixels with 1bpp
+                for (let y = 0; y < 15; y++) {
+                    const bit = ((chunk >> y) & 1) == 1;
+                    output.writeUInt8(bit ? 0xFF : 0x00);
+                }
+            }
+            else {
+                const bit = ((chunk >> 14) & 1) == 1 ? 0xFF : 0x00;
+                const count = chunk & 0b0011111111111111;
+
+                for (let c = 0; c < count; c++) {
+                    output.writeUInt8(bit);
+                }
+
+            }
+
+        }
+
+        return output.toBuffer();
     }
 
     abstract sendPackage(pack: Package): Promise<Package>;
