@@ -35,7 +35,7 @@ export const enum ServiceID {
 export const enum ServiceFlags {
     None = 0,
     Error = 1,
-    Respone = 1 << 1,
+    Response = 1 << 1,
 }
 
 export const enum FrameFlags {

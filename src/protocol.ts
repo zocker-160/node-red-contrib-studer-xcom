@@ -1,7 +1,7 @@
 
 import assert from "node:assert/strict";
 import { SmartBuffer } from "smart-buffer";
-import { Address, AggregationType, DataType, ErrorCode, FrameFlags, MAX_MULTI_INFO, MultiInfoFlags, ObjectType, PropertyID, ServiceFlags, ServiceID } from "./constants";
+import { Address, AggregationType, DataType, ErrorCode, FrameFlags, MAX_MULTI_INFO, MSG_MAX_LENGTH, MultiInfoFlags, ObjectType, PropertyID, ServiceFlags, ServiceID } from "./constants";
 
 const iconf = require("iconv-lite");
 
@@ -110,7 +110,7 @@ class Header {
     constructor(src: Address, dst: Address, length: number, 
                 frame_flags: FrameFlags = FrameFlags.None) {
 
-        assert(length <= 240);
+        //assert(length <= MSG_MAX_LENGTH);
 
         this.frame_flags = frame_flags;
         this.src_addr = src;
@@ -201,7 +201,7 @@ export class Package {
     }
 
     isResponse(): boolean {
-        return (this.frame.service_flags & ServiceFlags.Respone) === ServiceFlags.Respone;
+        return (this.frame.service_flags & ServiceFlags.Response) === ServiceFlags.Response;
     }
 
     isError(): boolean {

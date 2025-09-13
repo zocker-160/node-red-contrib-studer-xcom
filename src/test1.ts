@@ -1,5 +1,6 @@
-import { Address, AggregationType, DataType, ObjectType, PropertyID, ServiceID } from "./constants";
-import { Datapoint, MultiInfoRequest, Package } from "./protocol";
+import { writeFile, writeFileSync } from "fs";
+import { Address, AggregationType, DataType, ObjectID_Screen, ObjectType, PropertyID, ServiceID } from "./constants";
+import { Datapoint, MultiInfoRequest, MultiInfoResponse, Package } from "./protocol";
 import { XcomRS232 } from "./XcomRS232";
 
 
@@ -65,8 +66,8 @@ function debug2() {
         .finally(() => xcom.close());
 }
 
-function debug3() {
-    const xcom = new XcomRS232("/dev/ttyXcom232", 115200);
+function debugMultiInfo() {
+    const xcom = new XcomRS232("/dev/ttyXcom232", 115200, true);
 
     const multiinfo = [
         new MultiInfoRequest(3081, AggregationType.Master),
@@ -76,9 +77,45 @@ function debug3() {
         new MultiInfoRequest(11007, AggregationType.Master)
     ];
 
+    const data = MultiInfoRequest.bytesFromArray(multiinfo);
+    const request = Package.genPackage(
+        ServiceID.PropertyRead,
+        0x1,
+        ObjectType.MultiInfo,
+        PropertyID.None,
+        data,
+        Address.Source,
+        Address.Xcom232i
+    );
+    //console.log("request:", request.getBytes().toString("hex"));
+
+    xcom.sendPackage(request)
+        .then(p => {
+            //console.log("response", p.getBytes().toString("hex"));
+
+            const mir = MultiInfoResponse.fromBuffer(
+                p.frame.service_data.property_data, multiinfo.length);
+
+            console.log("data", mir);
+        })
+        .finally(() => xcom.close());
+
+    /*
     xcom.getMultiValue(multiinfo)
         .then(p => console.log(p))
         .finally(() => xcom.close());
+    */
 }
 
-debug3();
+function debugScreen() {
+    const xcom = new XcomRS232("/dev/ttyXcom232", 115200, true);
+
+    xcom.getScreen(ObjectID_Screen.Refresh)
+        .then(p => {
+            console.log(p.getBuffer("image/png"));
+            //p.write("image.png");
+        })
+        .finally(() => xcom.close());
+}
+
+debugScreen();

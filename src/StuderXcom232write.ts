@@ -1,4 +1,4 @@
-import { Node, NodeAPI, NodeDef } from "node-red";
+import { NodeAPI, NodeDef } from "node-red";
 import { Datapoint } from "./protocol";
 import { Address, DataType, PropertyID } from "./constants";
 import { XcomRS232 } from "./XcomRS232";
