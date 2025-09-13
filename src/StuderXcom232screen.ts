@@ -6,6 +6,7 @@ import { XcomRS232 } from "./XcomRS232";
 
 interface StuderConfig extends NodeDef {
     serial: string
+    colorinvert?: boolean
 }
 
 
@@ -63,8 +64,9 @@ export = function (RED: NodeAPI) {
                 });
 
                 const MIME = "image/png";
+                const colorInvert = config.colorinvert ? true : false;
 
-                xcom.getScreen(val)
+                xcom.getScreen(val, colorInvert)
                     .then(img => img.getBuffer(MIME))
                     .then(img => {
                         msg.mime = MIME;

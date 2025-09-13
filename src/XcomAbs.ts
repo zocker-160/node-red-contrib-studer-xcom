@@ -101,7 +101,7 @@ export abstract class XcomAbs {
     }
 
 
-    async getScreen(command: ObjectID_Screen): Promise<JimpInstance> {
+    async getScreen(command: ObjectID_Screen, colorinvert = false): Promise<JimpInstance> {
         const request: Package = Package.genPackage(
             ServiceID.PropertyRead,
             command,
@@ -112,10 +112,10 @@ export abstract class XcomAbs {
             Address.Xcom232i
         );
         return this.sendPackage(request).then(
-            p => this.decodeScreenData(p.frame.service_data.property_data));
+            p => this.decodeScreenData(p.frame.service_data.property_data, colorinvert));
     }
 
-    private decodeScreenData(buf: Buffer): JimpInstance {
+    private decodeScreenData(buf: Buffer, colorinvert: boolean): JimpInstance {
         // looking at the raw data in hex editor, it seems like
         // the data is not encoded the way it is explained in the documentation at all
         // instead they are simply sending the image encoded with 1bpp
@@ -124,6 +124,9 @@ export abstract class XcomAbs {
         const xRes = 128;
         const yRes = 64;
 
+        const colorWhite = 0xFFFFFFFF;
+        const colorBlack = 0x000000FF;
+
         const output: number[] = [];
 
         for (let i = 0; i < buf.length; i++) {
@@ -131,8 +134,17 @@ export abstract class XcomAbs {
             const chunk = buf.readUint8(i);
 
             for (let x = 7; x >= 0; x--) {
-                const bit = ((chunk >> x) & 1) ? 0xFFFFFFFF : 0x000000FF;
-                output.push(bit);
+                const bit = (chunk >> x) & 1;
+                let color;
+
+                if (colorinvert) {
+                    color = bit ? colorWhite : colorBlack;
+                }
+                else {
+                    color = bit ? colorBlack : colorWhite;
+                }
+
+                output.push(color);
             }
         }
 

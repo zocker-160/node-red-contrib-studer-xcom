@@ -7,7 +7,8 @@
         color: '#deb887',
         defaults: {
             name: {value:""},
-            serial: {type: "serial-port", required: true}
+            serial: {type: "serial-port", required: true},
+            colorinvert: {value: false, required: false}
         },
         inputs: 1,
         outputs: 1,
@@ -29,6 +30,14 @@
     <div class="form-row">
         <label for="node-input-serial"><i class="fa fa-random"></i> Serial Port</label>
         <input id="node-input-serial">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-colorinvert"></label>
+        <label for="node-input-colorinvert" style="width: 70%; user-select: none;">
+            <input type="checkbox" id="node-input-colorinvert" style="width: 22px; vertical-align: top;">
+            <span>Invert Colors</span>
+        </label>
     </div>
 </script>
 
