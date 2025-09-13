@@ -12,12 +12,18 @@
   "author": "zocker_160",
   "license": "AGPL-3.0-or-later",
   "readme": "Readme.md",
-  "repository": {"url": "https://github.com/zocker-160/node-red-contrib-studer-xcom"},
-  "keywords": ["iot", "smarthome"],
+  "repository": {
+    "url": "https://github.com/zocker-160/node-red-contrib-studer-xcom"
+  },
+  "keywords": [
+    "iot",
+    "smarthome"
+  ],
   "node-red": {
     "nodes": {
       "Xcom232i read": "dist/StuderXcom232read.js",
-      "Xcom232i write": "dist/StuderXcom232write.js"
+      "Xcom232i write": "dist/StuderXcom232write.js",
+      "Xcom232i screen": "dist/StuderXcom232screen.js"
     }
   },
   "devDependencies": {
@@ -28,6 +34,7 @@
   "dependencies": {
     "@serialport/parser-readline": "^13.0.0",
     "iconv-lite": "^0.6.3",
+    "jimp": "^1.6.0",
     "serialport": "^13.0.0",
     "smart-buffer": "^4.2.0"
   }
